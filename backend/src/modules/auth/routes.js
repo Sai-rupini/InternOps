@@ -50,9 +50,22 @@ const { email, password } = result.data;
   });
 
   // Logout
-  fastify.post('/logout', { schema: { tags: ['Authentication'], description: 'Logout and revoke refresh token' } }, async (req, reply) => {
-    const token = req.cookies.refreshToken || req.body.refreshToken;
-    if (token) await service.logout(token);
+  fastify.post('/logout', { 
+  preHandler: [auth],
+  schema: { tags: ['Authentication'], description: 'Logout and revoke refresh token' } }, async (req, reply) => {
+    const token =req.cookies.refreshToken ||req.body?.refreshToken;
+if (!token) {
+  return reply.status(400).send({
+    error: 'Refresh token required'
+  });
+}
+   await service.logout(
+      token,
+      req.user.id,
+      req.ip,
+      req.headers['user-agent']
+    );
+
     reply.clearCookie('refreshToken', { path: '/api/auth/refresh' });
     return { message: 'Logged out' };
   });
