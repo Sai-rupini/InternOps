@@ -40,6 +40,7 @@ function validateEnv() {
     for (const key of missingRequired) {
       console.error(`   • ${key}`);
     }
+    
     process.exit(1);
   }
 }
