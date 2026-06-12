@@ -28,16 +28,18 @@ async function topPerformers(role, limit = 10) {
   return res.rows;
 }
 
-async function attendanceTrends(months = 6) {
-  // Aggregate attendance by month for the last N months
+// ✅ repository.js — add department scope:
+async function attendanceTrends(months = 6, departmentId = null) {
   const res = await pool.query(`
-    SELECT TO_CHAR(date,'YYYY-MM') as month, status, COUNT(*) as count
-    FROM attendance
-    WHERE deleted_at IS NULL
-      AND date >= date_trunc('month', CURRENT_DATE) - make_interval(months => $1::int)
-    GROUP BY TO_CHAR(date,'YYYY-MM'), status
-    ORDER BY month, status
-  `, [months]);
+    SELECT TO_CHAR(a.date,'YYYY-MM') as month, a.status, COUNT(*) as count
+    FROM attendance a
+    JOIN users u ON u.id = a.user_id AND u.deleted_at IS NULL
+    WHERE a.deleted_at IS NULL
+      AND a.date >= date_trunc('month', CURRENT_DATE) - make_interval(months => $1::int)
+      AND ($2::uuid IS NULL OR u.department_id = $2)
+    GROUP BY TO_CHAR(a.date,'YYYY-MM'), a.status
+    ORDER BY month, a.status
+  `, [months, departmentId]);
   return res.rows;
 }
 

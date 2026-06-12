@@ -45,7 +45,16 @@ async function routes(fastify) {
       departmentId: z.string().uuid().optional(),
       attendeeIds: z.array(z.string().uuid()).optional()
     });
-    const data = schema.parse(req.body);
+    const validation = schema.safeParse(req.body);
+
+if (!validation.success) {
+  return reply.status(400).send({
+    error: 'Validation failed',
+    details: validation.error.errors
+  });
+}
+
+const data = validation.data;
     const meeting = await repo.createMeeting({
       ...data,
       createdBy: req.user.id,

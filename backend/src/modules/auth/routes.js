@@ -27,7 +27,7 @@ async function routes(fastify) {
     const result = await service.login(email, password, req.ip, req.headers['user-agent']);
     reply.setCookie('refreshToken', result.refreshToken, { httpOnly: true, secure: isProduction, sameSite: 'strict', path: '/api/auth/refresh' });
     return { accessToken: result.accessToken, refreshToken: result.refreshToken, user: result.user };
-  });
+    
 
   // Refresh token
   fastify.post('/refresh', { schema: { tags: ['Authentication'], description: 'Refresh access token' } }, async (req, reply) => {
@@ -39,9 +39,22 @@ async function routes(fastify) {
   });
 
   // Logout
-  fastify.post('/logout', { schema: { tags: ['Authentication'], description: 'Logout and revoke refresh token' } }, async (req, reply) => {
-    const token = req.cookies.refreshToken || req.body.refreshToken;
-    if (token) await service.logout(token);
+  fastify.post('/logout', { 
+  preHandler: [auth],
+  schema: { tags: ['Authentication'], description: 'Logout and revoke refresh token' } }, async (req, reply) => {
+    const token =req.cookies.refreshToken ||req.body?.refreshToken;
+if (!token) {
+  return reply.status(400).send({
+    error: 'Refresh token required'
+  });
+}
+   await service.logout(
+      token,
+      req.user.id,
+      req.ip,
+      req.headers['user-agent']
+    );
+
     reply.clearCookie('refreshToken', { path: '/api/auth/refresh' });
     return { message: 'Logged out' };
   });
@@ -50,6 +63,25 @@ async function routes(fastify) {
   fastify.get('/csrf-token', async (req, reply) => {
     const { generateToken } = require('../../middleware/csrf');
     return { csrfToken: generateToken() };
+  });
+
+  // Verify email
+  fastify.post('/verify-email', async (req, reply) => {
+    const schema = z.object({ token: z.string() });
+    const { token } = schema.parse(req.body);
+    const { verifyEmail } = require('./verificationService');
+    await verifyEmail(token);
+    return { message: 'Email verified successfully. You can now log in.' };
+  });
+
+  // Resend verification email
+  fastify.post('/resend-verification', { preHandler: [auth] }, async (req, reply) => {
+    const repo = require('./repository');
+    const user = await repo.findById(req.user.id);
+    if (!user) return reply.status(404).send({ error: 'User not found' });
+    const { sendVerificationEmail } = require('./verificationService');
+    await sendVerificationEmail(user.id, user.email);
+    return { message: 'Verification email sent.' };
   });
 
   // Forgot password
@@ -70,3 +102,4 @@ async function routes(fastify) {
 }
 
 module.exports = routes;
+

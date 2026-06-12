@@ -23,9 +23,14 @@ async function routes(fastify) {
   });
 
   // Attendance trends
-  fastify.get('/attendance-trends', { preHandler: [auth, rbac('ADMIN','SENIOR_TL')] }, async (req) => {
-    const { months = 6 } = req.query;
-    return repo.attendanceTrends(months);
+  fastify.get('/attendance-trends', { preHandler: [auth, rbac('ADMIN','SENIOR_TL')] }, async (req, reply) => {
+    const schema = z.object({
+      months: z.coerce.number().int().min(1).max(24).default(6),
+      departmentId: z.string().uuid().optional()
+    });
+    const { months, departmentId } = schema.parse(req.query);
+    const scopedDeptId = req.user.role === 'ADMIN' ? departmentId : req.user.departmentId;
+    return repo.attendanceTrends(months, scopedDeptId);
   });
 }
 

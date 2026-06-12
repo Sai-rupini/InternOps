@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { PageHeader, Card, Input } from '../../components/ui'
+import api from '../../lib/axios'
 
 const EXPORTS = [
   { key: 'attendance-csv', label: 'Attendance', icon: '📅', grad: 'from-blue-500 to-indigo-600', desc: 'Daily attendance records' },
@@ -10,7 +11,28 @@ const EXPORTS = [
 export default function Exports() {
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
-  const download = (endpoint) => window.open(`/api/reports/export/${endpoint}?from=${from}&to=${to}`, '_blank')
+
+  // window.open() navigates the browser directly, so the Axios Authorization
+  // header is never attached and the request hits the auth-guarded export
+  // routes unauthenticated (401). Fetch the CSV through the Axios instance with
+  // a blob response, then trigger the download from the response — same pattern
+  // as Team.jsx's exportCsv.
+  const download = async (endpoint) => {
+    if (!from || !to) return alert('Please select a date range first')
+    try {
+      const res = await api.get(`/reports/export/${endpoint}?from=${from}&to=${to}`, {
+        responseType: 'blob',
+      })
+      const url = window.URL.createObjectURL(new Blob([res.data]))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${endpoint}-${from}-${to}.csv`
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      alert(err.response?.data?.error || 'Download failed')
+    }
+  }
 
   return (
     <div>

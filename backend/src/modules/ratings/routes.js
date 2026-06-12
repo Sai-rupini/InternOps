@@ -1,3 +1,4 @@
+﻿const { notifyUser } = require('../../websocket');
 'use strict';
 const auth = require('../../middleware/auth');
 const rbac = require('../../middleware/rbac');
@@ -33,7 +34,8 @@ module.exports = async function ratingsRoutes(fastify) {
       details: { target: rated_user_id, score },
     });
     await sendNotification(rated_user_id, `You received a new rating: ${score}/5.`);
-    return rating;
+    await notifyUser(rating.rated_user_id, 'rating-received', { rating });
+    
   });
 
   // View a user's rating history (must be self or within hierarchy).
@@ -41,3 +43,4 @@ module.exports = async function ratingsRoutes(fastify) {
     return repo.getRatings(req.params.userId);
   });
 };
+

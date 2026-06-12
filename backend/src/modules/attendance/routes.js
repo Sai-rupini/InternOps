@@ -1,3 +1,4 @@
+﻿const { notifyUser } = require('../../websocket');
 const auth = require('../../middleware/auth');
 const direct = require('../../middleware/directManager');
 const ownership = require('../../middleware/ownership');
@@ -26,7 +27,8 @@ async function routes(fastify) {
     });
     // Notify the intern (or rated user) if desired
     await sendNotification(user_id, `Your attendance for ${date} has been marked as ${status}.`);
-    return att;
+    await notifyUser(att.user_id, 'attendance-marked', { attendance: att });
+    
   });
 
   // Bulk mark attendance (manager roles, ownership validated per entry)
@@ -69,6 +71,7 @@ async function routes(fastify) {
 }
 
 module.exports = routes;
+
 
 
 
