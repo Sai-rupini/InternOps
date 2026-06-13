@@ -56,7 +56,7 @@ app.register(require('@fastify/rate-limit'), {
 app.register(require('@fastify/cookie'));
 
 const { csrfProtection } = require('./middleware/csrf');
-app.addHook('onRequest', csrfProtection);
+app.register(csrfProtection);
 
 app.register(require('@fastify/multipart'), {
   limits: {
