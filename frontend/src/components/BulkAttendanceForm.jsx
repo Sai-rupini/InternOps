@@ -96,7 +96,11 @@ export default function BulkAttendanceForm() {
           />
         </div>
         <div className="pt-1">
-          <Btn type="submit" variant="primary" disabled={bulkMutation.isPending}>
+          <Btn
+            type="submit"
+            variant="primary"
+            disabled={bulkMutation.isPending}
+          >
             {bulkMutation.isPending
               ? 'Marking…'
               : `Bulk mark ${selectedUsers.length || ''}`}
