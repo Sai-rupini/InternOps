@@ -40,10 +40,11 @@ async function routes(fastify) {
 
       // Generate UUID filename
       const filename = uuidv4() + ext;
-      const uploadPath = path.join('uploads', filename);
+      const absoluteUploadDir = path.join(__dirname, '..', '..', 'uploads');
+      const uploadPath = path.join(absoluteUploadDir, filename);
       await fs.promises.writeFile(uploadPath, await data.toBuffer());
-
-      const proof = await repo.submitProof(task_id, req.user.id, uploadPath);
+      const dbSavedPath = path.join('uploads', filename);
+      const proof = await repo.submitProof(task_id, req.user.id, dbSavedPath);
       await createAuditLog({
         userId: req.user.id,
         action: 'PROOF_SUBMITTED',
