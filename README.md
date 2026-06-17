@@ -4,7 +4,8 @@ InternOps is an enterprise-grade workforce management platform designed to strea
 
 ---
 
-## Features 
+## Features
+
 - **Hierarchical RBAC**: 5-tier role system (Admin to Intern) with ownership validation.
 - **Attendance**: Single/Bulk marking with audit trails.
 - **Task Management**: Social task assignments with multi-level image proof verification.
@@ -17,17 +18,20 @@ InternOps is an enterprise-grade workforce management platform designed to strea
 ## 🛠 Tech Stack
 
 **Backend**
+
 - Node.js
 - Fastify
 - PostgreSQL (Raw SQL)
 
 **Frontend**
+
 - React
 - Vite
 - Tailwind CSS
 - TanStack Query
 
 **Security**
+
 - JWT
 - Argon2
 - Helmet
