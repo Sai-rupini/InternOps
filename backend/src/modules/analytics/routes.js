@@ -17,17 +17,25 @@ async function routes(fastify) {
   );
 
   // Department attendance rate (admin/senior TL)
-  fastify.get('/department-attendance', { preHandler: [auth, rbac('ADMIN','SENIOR_TL')] }, async (req, reply) => {
-    const { departmentId, month, year } = req.query;
-    if (!departmentId || !month || !year)
-      return reply.status(400).send({ error: 'departmentId, month, and year are required' });
+  fastify.get(
+    '/department-attendance',
+    { preHandler: [auth, rbac('ADMIN', 'SENIOR_TL')] },
+    async (req, reply) => {
+      const { departmentId, month, year } = req.query;
+      if (!departmentId || !month || !year)
+        return reply
+          .status(400)
+          .send({ error: 'departmentId, month, and year are required' });
 
-    // ✅ Scope check: SENIOR_TL can only query their own department
-    if (req.user.role !== 'ADMIN' && req.user.departmentId !== departmentId)
-      return reply.status(403).send({ error: 'Access restricted to your own department' });
+      // ✅ Scope check: SENIOR_TL can only query their own department
+      if (req.user.role !== 'ADMIN' && req.user.departmentId !== departmentId)
+        return reply
+          .status(403)
+          .send({ error: 'Access restricted to your own department' });
 
-    return repo.departmentAttendanceRate(departmentId, month, year);
-  });
+      return repo.departmentAttendanceRate(departmentId, month, year);
+    }
+  );
   // Top performers (Fully Secured & Optimized)
   fastify.get(
     '/top-performers',
