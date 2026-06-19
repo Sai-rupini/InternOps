@@ -3,13 +3,11 @@ const rbac = require('../../middleware/rbac');
 const ownership = require('../../middleware/ownership');
 const repo = require('./repository');
 const { createAuditLog, extractRequestInfo } = require('../../utils/audit');
-const { checkHierarchyAccess } = require('../../utils/hierarchy');
+const { checkHierarchyAccess, ROLE_RANK } = require('../../utils/hierarchy');
 const { z } = require('zod');
 
 // Roles that manage a team (Interns have no reports).
 const MANAGER_ROLES = ['ADMIN', 'SENIOR_TL', 'TL', 'CAPTAIN'];
-// Hierarchy levels — a manager may add any member ranked below themselves.
-const ROLE_RANK = { ADMIN: 4, SENIOR_TL: 3, TL: 2, CAPTAIN: 1, INTERN: 0 };
 // Roles a manager can assign (ADMIN is never assignable through team mgmt).
 const ASSIGNABLE_ROLES = ['SENIOR_TL', 'TL', 'CAPTAIN', 'INTERN'];
 
