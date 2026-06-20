@@ -51,7 +51,7 @@ async function login(email, password, ip, userAgent) {
   }
   // Clear all prior failed attempts so attacker-seeded failures don't
   // trigger a lockout for the legitimate user after a successful login.
-  await clearFailedAttempts(email);
+  await clearFailedAttempts(email, ip);
   await recordLoginAttempt(email, ip, true);
   const access = generateAccessToken(user);
   const refresh = generateRefreshToken(user);
