@@ -1,18 +1,18 @@
 function attendanceScore(attendancePercentage) {
-  if (attendancePercentage >= 95) return 5;
-  if (attendancePercentage >= 90) return 4.5;
-  if (attendancePercentage >= 80) return 4;
-  if (attendancePercentage >= 70) return 3;
-  if (attendancePercentage >= 60) return 2;
+  if (attendancePercentage >= 95) return 10;
+  if (attendancePercentage >= 90) return 8;
+  if (attendancePercentage >= 80) return 7;
+  if (attendancePercentage >= 70) return 6;
+  if (attendancePercentage >= 60) return 4;
 
   return 1;
 }
 
 function taskScore(verificationRate) {
-  if (verificationRate >= 90) return 5;
-  if (verificationRate >= 80) return 4;
-  if (verificationRate >= 70) return 3;
-  if (verificationRate >= 60) return 2;
+  if (verificationRate >= 90) return 10;
+  if (verificationRate >= 80) return 8;
+  if (verificationRate >= 70) return 6;
+  if (verificationRate >= 60) return 4;
 
   return 1;
 }

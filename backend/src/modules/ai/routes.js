@@ -40,10 +40,10 @@ async function routes(fastify) {
 
       try {
         const result = await generateAIResponse({
+          userId: req.user.id,
           messages: finalMessages,
           userId: req.user.id,
         });
-
         return {
           provider: result.provider,
           cached: result.cached,

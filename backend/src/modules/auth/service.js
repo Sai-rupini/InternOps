@@ -38,11 +38,19 @@ async function register(data, creator) {
   return user;
 }
 
+// Dummy hash used to flatten timing when user doesn't exist.
+// Prevents user-enumeration via response latency differences.
+const DUMMY_HASH =
+  '$argon2id$v=19$m=65536,t=3,p=4$c29tZXJhbmRvbXNhbHQ$RdescudvJCsgt3ub+b27Ze4AXpxcKAspe5gOjBosC2o';
+
 async function login(email, password, ip, userAgent) {
   const user = await repo.findByEmail(email);
   if (!user || user.suspended) {
-    await recordLoginAttempt(email, ip, false);
-    throw new UnauthorizedError('Invalid credentials or suspended');
+    // Always run argon2.verify even when user not found to flatten timing
+    const argon2 = require('argon2');
+    argon2.verify(DUMMY_HASH, password).catch(() => {});
+    recordLoginAttempt(email, ip, false).catch(() => {}); // fire-and-forget
+    throw new UnauthorizedError('Invalid credentials');
   }
   const valid = await repo.verifyPassword(user, password);
   if (!valid) {
@@ -51,7 +59,7 @@ async function login(email, password, ip, userAgent) {
   }
   // Clear all prior failed attempts so attacker-seeded failures don't
   // trigger a lockout for the legitimate user after a successful login.
-  await clearFailedAttempts(email);
+  await clearFailedAttempts(email, ip);
   await recordLoginAttempt(email, ip, true);
   const access = generateAccessToken(user);
   const refresh = generateRefreshToken(user);

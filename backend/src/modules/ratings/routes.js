@@ -23,7 +23,7 @@ module.exports = async function ratingsRoutes(fastify) {
       const { rated_user_id, score, remarks } = z
         .object({
           rated_user_id: z.string().uuid(),
-          score: z.coerce.number().int().min(1).max(5),
+          score: z.coerce.number().int().min(1).max(10),
           remarks: z.string().max(2000).optional(),
         })
         .parse(req.body);
@@ -57,7 +57,7 @@ module.exports = async function ratingsRoutes(fastify) {
       });
       await sendNotification(
         rated_user_id,
-        `You received a new rating: ${score}/5.`
+        `You received a new rating: ${score}/10.`
       );
       await notifyUser(rating.rated_user_id, 'rating-received', { rating });
 
