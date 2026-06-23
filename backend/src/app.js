@@ -25,32 +25,6 @@ app.register(require('@fastify/cors'), {
 
 app.register(require('@fastify/helmet'));
 
-app.register(async function sanitizationPlugin(instance) {
-  instance.addHook('preValidation', async (request) => {
-    const sanitize = (obj) => {
-      if (!obj || typeof obj !== 'object') return;
-
-      for (const key of Object.keys(obj)) {
-        const val = obj[key];
-
-        if (typeof val === 'string') {
-          // Strip HTML tags to mitigate XSS. Quotes are intentionally
-          // preserved: SQL injection is handled by parameterized queries,
-          // and stripping quotes corrupts valid input such as passwords
-          // and base64 CSRF tokens.
-          obj[key] = val.replace(/<[^>]*>/g, '');
-        } else if (typeof val === 'object') {
-          sanitize(val);
-        }
-      }
-    };
-
-    sanitize(request.body);
-    sanitize(request.query);
-    sanitize(request.params);
-  });
-});
-
 //  Register once globally — no Redis dependency
 app.register(require('@fastify/rate-limit'), {
   global: true,
