@@ -126,6 +126,22 @@ async function getProofsByIntern(internId) {
     )
   ).rows;
 }
+
+async function getProof(proofId) {
+  const res = await pool.query(
+    'SELECT * FROM proof_submissions WHERE id = $1',
+    [proofId]
+  );
+  return res.rows[0] || null;
+}
+
+async function deleteProof(proofId) {
+  await pool.query(
+    'UPDATE proof_submissions SET deleted_at = NOW() WHERE id = $1',
+    [proofId]
+  );
+}
+
 module.exports = {
   createTask,
   assignTask,
@@ -136,4 +152,6 @@ module.exports = {
   verifyProof,
   getProofsByTask,
   getProofsByIntern,
+  getProof,
+  deleteProof,
 };
