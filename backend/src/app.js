@@ -252,8 +252,15 @@ app.setErrorHandler((error, request, reply) => {
     });
   }
 
-  return reply.status(error.statusCode || 500).send({
-    error: error.message || 'Internal Server Error',
+  // Preserve messages for explicit HTTP errors, otherwise hide internal details
+  const statusCode = error.statusCode || 500;
+  const message =
+    statusCode < 500
+      ? error.message
+      : 'An unexpected error occurred. Please try again later.';
+
+  return reply.status(statusCode).send({
+    error: message,
   });
 });
 

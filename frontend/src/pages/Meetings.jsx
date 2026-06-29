@@ -12,9 +12,11 @@ import {
   Spinner,
   Badge,
 } from '../components/ui';
+import CustomDatePicker from '../components/CustomDatePicker';
+import CustomTimePicker from '../components/CustomTimePicker';
 
 export default function Meetings() {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
@@ -124,6 +126,7 @@ export default function Meetings() {
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 required
+                disabled={createMutation.isPending}
               />
             </div>
 
@@ -138,6 +141,7 @@ export default function Meetings() {
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
                 }
+                disabled={createMutation.isPending}
               />
             </div>
 
@@ -146,13 +150,13 @@ export default function Meetings() {
                 <label className="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 block">
                   Date
                 </label>
-                <Input
-                  type="date"
+
+                <CustomDatePicker
                   value={form.meetingDate}
-                  onChange={(e) =>
-                    setForm({ ...form, meetingDate: e.target.value })
-                  }
-                  required
+                  onChange={(value) => setForm({ ...form, meetingDate: value })}
+                  placeholder="Select date"
+                  disabled={createMutation.isPending}
+                  className="w-full"
                 />
               </div>
 
@@ -160,12 +164,13 @@ export default function Meetings() {
                 <label className="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 block">
                   Start Time
                 </label>
-                <Input
-                  type="time"
+
+                <CustomTimePicker
                   value={form.startTime}
-                  onChange={(e) =>
-                    setForm({ ...form, startTime: e.target.value })
-                  }
+                  onChange={(value) => setForm({ ...form, startTime: value })}
+                  placeholder="Start time"
+                  disabled={createMutation.isPending}
+                  className="w-full"
                 />
               </div>
 
@@ -173,12 +178,13 @@ export default function Meetings() {
                 <label className="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 block">
                   End Time
                 </label>
-                <Input
-                  type="time"
+
+                <CustomTimePicker
                   value={form.endTime}
-                  onChange={(e) =>
-                    setForm({ ...form, endTime: e.target.value })
-                  }
+                  onChange={(value) => setForm({ ...form, endTime: value })}
+                  placeholder="End time"
+                  disabled={createMutation.isPending}
+                  className="w-full"
                 />
               </div>
             </div>

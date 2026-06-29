@@ -38,6 +38,16 @@ async function isTaskAssignedToUser(taskId, userId) {
   );
   return res.rowCount > 0;
 }
+async function getAllInternEmails() {
+  const res = await pool.query(
+    `SELECT email
+     FROM users
+     WHERE role IN ('INTERN', 'CAPTAIN')
+       AND email IS NOT NULL`
+  );
+
+  return res.rows.map((row) => row.email);
+}
 async function getTasks(filters, userId, userRole) {
   const params = [];
   const where = ['st.deleted_at IS NULL'];
@@ -154,4 +164,5 @@ module.exports = {
   getProofsByIntern,
   getProof,
   deleteProof,
+  getAllInternEmails,
 };

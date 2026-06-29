@@ -29,7 +29,7 @@ const PLATFORM_ICON = {
 };
 
 export default function Tasks() {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const [selectedTask, setSelectedTask] = useState(null);
   const [showForm, setShowForm] = useState(false);

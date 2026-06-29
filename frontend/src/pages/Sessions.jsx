@@ -19,10 +19,16 @@ export default function Sessions() {
   });
 
   const [confirming, setConfirming] = useState(false);
+  const [revokingId, setRevokingId] = useState(null);
 
   const revokeMut = useMutation({
     mutationFn: (sessionId) => api.delete(`/sessions/me/${sessionId}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sessions'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    },
+    onSettled: () => {
+      setRevokingId(null);
+    },
   });
 
   const revokeAllMut = useMutation({
@@ -189,11 +195,14 @@ export default function Sessions() {
                     <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end">
                       <Btn
                         variant="outline"
-                        disabled={revokeMut.isPending}
-                        onClick={() => revokeMut.mutate(s.sessionId)}
+                        disabled={revokingId === s.sessionId}
+                        onClick={() => {
+                          setRevokingId(s.sessionId);
+                          revokeMut.mutate(s.sessionId);
+                        }}
                         className="rounded-2xl"
                       >
-                        {revokeMut.isPending ? 'Revoking...' : 'Revoke'}
+                        {revokingId === s.sessionId ? 'Revoking...' : 'Revoke'}
                       </Btn>
                     </div>
                   </div>
