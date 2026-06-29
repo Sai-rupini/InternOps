@@ -146,5 +146,5 @@ module.exports = {
   verifyProof,
   getProofsByTask,
   getProofsByIntern,
-   getAllInternEmails,
+  getAllInternEmails,
 };
