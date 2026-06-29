@@ -1,4 +1,7 @@
 require('dotenv').config();
+const validateEnv = require('./config/validateEnv');
+validateEnv();
+
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const Fastify = require('fastify');
