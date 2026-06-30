@@ -9,7 +9,6 @@ const config = require('./config');
 const pool = require('./config/db');
 const metrics = require('./utils/metrics');
 const { initializeWebSocket } = require('./websocket');
-const noticesRoutes = require('./modules/notices/routes');
 
 const app = Fastify({
   trustProxy: config.nodeEnv === 'production' ? true : 'loopback',
@@ -79,83 +78,8 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
-app.register(require('./modules/auth/routes'), {
-  prefix: '/api/auth',
-});
-
-app.register(require('./modules/users/routes'), {
-  prefix: '/api/users',
-});
-
-app.register(require('./modules/departments/routes'), {
-  prefix: '/api/departments',
-});
-
-app.register(require('./modules/hierarchy/routes'), {
-  prefix: '/api/hierarchy',
-});
-
-app.register(require('./modules/team/routes'), {
-  prefix: '/api/team',
-});
-
-app.register(require('./modules/attendance/routes'), {
-  prefix: '/api/attendance',
-});
-
-app.register(require('./modules/ratings/routes'), {
-  prefix: '/api/ratings',
-});
-
-app.register(require('./modules/social-tasks/routes'), {
-  prefix: '/api/tasks',
-});
-
-app.register(require('./modules/proof-submissions/routes'), {
-  prefix: '/api/proofs',
-});
-
-app.register(require('./modules/notifications/routes'), {
-  prefix: '/api/notifications',
-});
-
-app.register(require('./modules/audit/routes'), {
-  prefix: '/api/audit',
-});
-
-app.register(require('./modules/uploads/routes'), {
-  prefix: '/api/uploads',
-});
-
-app.register(require('./modules/analytics/routes'), {
-  prefix: '/api/analytics',
-});
-
-app.register(require('./modules/meetings/routes'), {
-  prefix: '/api/meetings',
-});
-
-app.register(require('./modules/sessions/routes'), {
-  prefix: '/api/sessions',
-});
-
-app.register(require('./modules/reports/routes'), {
-  prefix: '/api/reports',
-});
-
-app.register(require('./modules/reports/export'), {
-  prefix: '/api/reports/export',
-});
-
-app.register(require('./modules/ai/routes'), {
-  prefix: '/api/ai',
-});
-
-app.register(require('./modules/uptoskills/routes'), {
-  prefix: '/api/uptoskills',
-});
-
-app.register(noticesRoutes);
+// ---- API routes (delegated to dedicated router factory) ----
+app.register(require('./routes'), { prefix: '/api' });
 
 app.get('/', async (req, reply) => {
   reply.redirect('/docs');
