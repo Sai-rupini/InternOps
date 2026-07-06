@@ -7,7 +7,10 @@ const repo = require('./repository');
 const { extractRequestInfo } = require('../../utils/audit');
 const { z } = require('zod');
 const emailService = require('../../services/email');
+const { runWithConcurrencyLimit } = require('../../utils/concurrency');
 
+const EMAIL_BATCH_SIZE = 500;
+const EMAIL_CONCURRENCY = 10;
 const createTaskSchema = z.object({
   title: z.string().min(1).max(255),
   description: z.string().max(2000).optional(),
@@ -41,6 +44,55 @@ const submitProofSchema = z
       'You must perform at least one action (Comment, Repost, or Share) to submit proof.',
     path: ['did_comment'],
   });
+
+async function notifyAllInternsAsync(task, log) {
+  try {
+    const totalCount = await repo.getInternEmailCount();
+    if (totalCount === 0) return;
+
+    let offset = 0;
+    let totalSent = 0;
+    let totalFailed = 0;
+
+    while (offset < totalCount) {
+      const emails = await repo.getAllInternEmails(EMAIL_BATCH_SIZE, offset);
+      if (emails.length === 0) break;
+
+      const results = await runWithConcurrencyLimit(
+        emails,
+        (email) =>
+          emailService.sendNotification(email, {
+            title: 'New Social Media Task',
+            message: `A new task "${task.title}" has been posted. Please complete it before the deadline.`,
+          }),
+        EMAIL_CONCURRENCY
+      );
+
+      const failed = results.filter((r) => r.status === 'rejected');
+      totalSent += results.length - failed.length;
+      totalFailed += failed.length;
+
+      if (failed.length > 0) {
+        log.warn(
+          { failedCount: failed.length, sample: failed[0].reason?.message },
+          'Some intern notification emails failed in batch'
+        );
+      }
+
+      offset += EMAIL_BATCH_SIZE;
+    }
+
+    log.info(
+      { taskId: task.id, totalSent, totalFailed },
+      'Finished sending intern task notifications'
+    );
+  } catch (err) {
+    log.warn(
+      { err, taskId: task.id },
+      'Task created but bulk intern notification process failed'
+    );
+  }
+}
 
 module.exports = async function socialTasksRoutes(fastify) {
   // Create a social task (Admin / Senior TL).
@@ -84,21 +136,7 @@ module.exports = async function socialTasksRoutes(fastify) {
           'Task created but notification email failed'
         );
       }
-      try {
-        const internEmails = await repo.getAllInternEmails();
-
-        for (const email of internEmails) {
-          await emailService.sendNotification(email, {
-            title: 'New Social Media Task',
-            message: `A new task "${task.title}" has been posted. Please complete it before the deadline.`,
-          });
-        }
-      } catch (emailErr) {
-        req.log.warn(
-          { emailErr },
-          'Task created but intern notification emails failed'
-        );
-      }
+      notifyAllInternsAsync(task, req.log);
       return task;
     }
   );
