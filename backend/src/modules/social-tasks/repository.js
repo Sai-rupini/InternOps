@@ -223,6 +223,30 @@ async function getProof(proofId) {
   return res.rows[0] || null;
 }
 
+async function updateTask(
+  taskId,
+  { title, description, targetPlatform, taskLink, deadline }
+) {
+  const res = await pool.query(
+    `UPDATE social_tasks
+     SET title = COALESCE($1, title),
+         description = COALESCE($2, description),
+         target_platform = COALESCE($3, target_platform),
+         task_link = COALESCE($4, task_link),
+         deadline = COALESCE($5, deadline)
+     WHERE id = $6 AND deleted_at IS NULL
+     RETURNING *`,
+    [title, description, targetPlatform, taskLink, deadline, taskId]
+  );
+  return res.rows[0] || null;
+}
+
+async function deleteTask(taskId) {
+  await pool.query('UPDATE social_tasks SET deleted_at = NOW() WHERE id = $1', [
+    taskId,
+  ]);
+}
+
 async function deleteProof(proofId) {
   await pool.query(
     'UPDATE proof_submissions SET deleted_at = NOW() WHERE id = $1',
@@ -245,6 +269,8 @@ async function deleteProofImage(imageId) {
 
 module.exports = {
   createTask,
+  updateTask,
+  deleteTask,
   assignTask,
   getUserEmail,
   isTaskAssignedToUser,

@@ -45,6 +45,21 @@ const submitProofSchema = z
     path: ['did_comment'],
   });
 
+const updateTaskSchema = z.object({
+  title: z.string().min(1).max(255).optional(),
+  description: z.string().max(2000).optional(),
+  targetPlatform: z.string().max(100).optional(),
+  taskLink: z.string().max(500).optional(),
+  deadline: z
+    .string()
+    .datetime({ offset: true })
+    .or(z.string().regex(/^\d{4}-\d{2}-\d{2}/))
+    .optional()
+    .refine(
+      (v) => !v || !Number.isNaN(Date.parse(v)),
+      'deadline must be a valid ISO date'
+    ),
+});
 async function notifyAllInternsAsync(task, log) {
   try {
     const totalCount = await repo.getInternEmailCount();
@@ -138,6 +153,55 @@ module.exports = async function socialTasksRoutes(fastify) {
       }
       notifyAllInternsAsync(task, req.log);
       return task;
+    }
+  );
+
+  // Update a social task (Admin / Senior TL).
+  fastify.patch(
+    '/:id',
+    {
+      schema: { tags: ['Tasks'], description: 'Update a social task' },
+      preHandler: [auth, rbac('ADMIN', 'SENIOR_TL'), sanitize],
+    },
+    async (req, reply) => {
+      const parsed = updateTaskSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return reply
+          .status(400)
+          .send({ error: 'Validation failed', details: parsed.error.issues });
+      }
+      const task = await repo.updateTask(req.params.id, parsed.data);
+      if (!task) return reply.status(404).send({ error: 'Task not found' });
+      req.auditOnResponse = {
+        userId: req.user.id,
+        ...extractRequestInfo(req),
+        action: 'TASK_UPDATED',
+        resourceType: 'social_task',
+        resourceId: task.id,
+        details: parsed.data,
+      };
+      return task;
+    }
+  );
+
+  // Delete a social task (Admin / Senior TL).
+  fastify.delete(
+    '/:id',
+    {
+      schema: { tags: ['Tasks'], description: 'Delete a social task' },
+      preHandler: [auth, rbac('ADMIN', 'SENIOR_TL')],
+    },
+    async (req, reply) => {
+      await repo.deleteTask(req.params.id);
+      req.auditOnResponse = {
+        userId: req.user.id,
+        ...extractRequestInfo(req),
+        action: 'TASK_DELETED',
+        resourceType: 'social_task',
+        resourceId: req.params.id,
+        details: {},
+      };
+      return { success: true };
     }
   );
 
