@@ -1,10 +1,11 @@
 const crypto = require('crypto');
-
+const config = require('../config');
+const { verifyAccessToken } = require('../utils/tokens');
 const SESSION_COOKIE = 'csrf-sid';
 const TOKEN_COOKIE = 'csrf-token';
 
 function getSecret() {
-  const secret = require('../config').jwt?.secret;
+  const secret = config.jwt?.secret;
   if (!secret) {
     throw new Error('JWT_SECRET is not configured; cannot sign CSRF session');
   }
@@ -99,7 +100,6 @@ function getOrCreateToken(request, reply) {
   const authHeader = request.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     try {
-      const { verifyAccessToken } = require('../utils/tokens');
       const decoded = verifyAccessToken(authHeader.split(' ')[1]);
       tokenUserId = decoded.id;
     } catch (err) {}
@@ -165,7 +165,6 @@ async function csrfCheck(request, reply) {
     const authHeader = request.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       try {
-        const { verifyAccessToken } = require('../utils/tokens');
         const decoded = verifyAccessToken(authHeader.split(' ')[1]);
         tokenUserId = decoded.id;
       } catch (err) {}
