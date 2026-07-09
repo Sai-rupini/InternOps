@@ -121,7 +121,15 @@ function getOrCreateToken(request, reply) {
 }
 
 function generateToken(request, reply) {
-  return getOrCreateToken(request, reply);
+  const token = getOrCreateToken(request, reply);
+  reply.setCookie('csrf-token', token, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    path: '/',
+  });
+
+  return token;
 }
 
 const EXEMPT = [
