@@ -17,6 +17,7 @@ function getBaseUrl() {
 const api = axios.create({
   baseURL: getBaseUrl(),
   withCredentials: true,
+  timeout: 15000,
 });
 
 // The backend's CSRF guard requires the X-CSRF-Token header on mutating
@@ -141,10 +142,30 @@ function processQueue(error, token = null) {
 }
 
 function handleLogout() {
-  localStorage.removeItem('user');
-  clearCsrfToken();
-  if (!window.location.pathname.startsWith('/login')) {
-    window.location.href = '/login';
+  try {
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.removeItem('user');
+      } catch {
+        /* ignore localStorage unavailability */
+      }
+
+      clearCsrfToken();
+
+      try {
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.href = '/login';
+        }
+      } catch {
+        /* ignore location assignment errors */
+      }
+    } else {
+      // If there's no window (SSR), still clear tokens in memory
+      clearCsrfToken();
+    }
+  } catch {
+    /* defensive: ensure logout doesn't throw */
+    clearCsrfToken();
   }
 }
 

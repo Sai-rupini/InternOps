@@ -14,10 +14,7 @@ async function getRedisClient() {
 
   clientPromise = (async () => {
     try {
-      const c = redis.createClient({
-        url: config.redisUrl,
-        socket: { connectTimeout: 1000, reconnectStrategy: false },
-      });
+      const c = redis.createClient(redisOptions);
 
       c.on('error', (err) => {
         logger.warn({ err, name: 'redis_error' }, 'Redis connection error');
@@ -47,7 +44,10 @@ async function getRedisClient() {
 }
 
 function getRedisStatus() {
-  if (process.env.NODE_ENV === 'test' || !config.redisUrl) return 'disabled';
+  if (process.env.NODE_ENV === 'test' || !config.redis?.enabled) {
+    return 'disabled';
+  }
+
   return redisConnected ? 'connected' : 'disconnected';
 }
 
