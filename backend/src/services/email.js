@@ -34,6 +34,36 @@ setInterval(() => {
 
 const metrics = { sent: 0, failed: 0, bounced: 0, retried: 0 };
 
+// --- Email delivery queue (in-memory) ---
+const emailQueue = [];
+let queueProcessing = false;
+const queueMetrics = { queued: 0, processed: 0 };
+
+function enqueueEmailJob(jobFn) {
+  return new Promise((resolve, reject) => {
+    emailQueue.push({ jobFn, resolve, reject });
+    queueMetrics.queued++;
+    processQueue();
+  });
+}
+
+async function processQueue() {
+  if (queueProcessing) return; // already running, new job will be picked up in the loop
+  queueProcessing = true;
+  while (emailQueue.length > 0) {
+    const { jobFn, resolve, reject } = emailQueue.shift();
+    try {
+      const result = await jobFn();
+      queueMetrics.processed++;
+      resolve(result);
+    } catch (err) {
+      queueMetrics.processed++;
+      reject(err);
+    }
+  }
+  queueProcessing = false;
+}
+
 class EmailService {
   constructor() {
     this.transporter = null;
@@ -137,7 +167,22 @@ class EmailService {
       throw new Error('Missing required fields: to, subject');
     this._checkBounce(to);
     this._checkRateLimit(to);
+    enqueueEmailJob(() =>
+      this._deliver({ to, subject, template, data, html, text })
+    ).catch((err) => {
+      log.error(
+        { to, subject, err: err.message },
+        'Queued email ultimately failed after retries'
+      );
+    });
+    return {
+      queued: true,
+      to,
+      subject,
+    };
+  }
 
+  async _deliver({ to, subject, template, data, html, text }) {
     let htmlContent = html;
     let textContent = text;
 
@@ -246,8 +291,15 @@ class EmailService {
     });
   }
 
+  async _flushQueue() {
+    // waits until the queue has fully drained (test helper)
+    while (queueProcessing || emailQueue.length > 0) {
+      await new Promise((r) => setTimeout(r, 10));
+    }
+  }
+
   getMetrics() {
-    return { ...metrics };
+    return { ...metrics, ...queueMetrics, queueLength: emailQueue.length };
   }
 
   resetMetrics() {
