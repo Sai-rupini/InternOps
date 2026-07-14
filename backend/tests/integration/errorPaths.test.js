@@ -31,7 +31,7 @@ describe('API error-path integration tests', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/auth/login',
+      url: '/api/v1/auth/login',
       payload: { email: 'admin@internops.com', password: 'Admin@123' },
     });
 
@@ -45,7 +45,7 @@ describe('API error-path integration tests', () => {
   it('returns 400 for malformed request bodies without exposing internals', async () => {
     const res = await app.inject({
       method: 'POST',
-      url: '/api/auth/login',
+      url: '/api/v1/auth/login',
       payload: { email: 'not-an-email', password: 'short' },
     });
 
@@ -70,7 +70,7 @@ describe('API error-path integration tests', () => {
     for (const token of [expiredToken, 'not.a.jwt']) {
       const res = await app.inject({
         method: 'GET',
-        url: '/api/users/me',
+        url: '/api/v1/users/me',
         headers: { authorization: `Bearer ${token}` },
       });
       expect(res.statusCode).toBe(401);
@@ -87,7 +87,7 @@ describe('API error-path integration tests', () => {
     );
     const csrfRes = await app.inject({
       method: 'GET',
-      url: '/api/auth/csrf-token',
+      url: '/api/v1/auth/csrf-token',
       headers: { authorization: `Bearer ${token}` },
     });
     const csrfToken = JSON.parse(csrfRes.body).csrfToken;
@@ -103,7 +103,7 @@ describe('API error-path integration tests', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/uploads/avatar',
+      url: '/api/v1/uploads/avatar',
       cookies,
       headers: {
         authorization: `Bearer ${token}`,
