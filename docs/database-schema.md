@@ -52,8 +52,6 @@ It includes:
   - [Indexes (Summary)](#indexes-summary)
   - [Maintaining this Documentation](#maintaining-this-documentation)
 
-
-
 ## Database Overview
 
 The InternOps database is designed around a user hierarchy and internship management workflow.
@@ -90,8 +88,8 @@ The following sections document each table, including its columns, constraints, 
 
 ## Tables
 
-
 ### departments
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `name` VARCHAR(255) NOT NULL
 - `created_by` UUID
@@ -100,10 +98,12 @@ The following sections document each table, including its columns, constraints, 
 - `deleted_at` TIMESTAMPTZ
 
 Constraints & Indexes:
+
 - UNIQUE: `departments_name_unique` on `name`
 - Partial unique index: `departments_name_active_idx` ON (name) WHERE deleted_at IS NULL
 
 ### users
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `email` VARCHAR(255) NOT NULL
 - `password_hash` VARCHAR(255) NOT NULL
@@ -119,6 +119,7 @@ Constraints & Indexes:
 - `email_verified` BOOLEAN DEFAULT FALSE
 
 Constraints & Indexes:
+
 - CHECK: `users_email_lowercase` CHECK (email = LOWER(email))
 - UNIQUE (partial): `users_email_active_key` UNIQUE (LOWER(email)) WHERE deleted_at IS NULL
 - UNIQUE: `users_email_lower_idx` UNIQUE (LOWER(email))
@@ -126,6 +127,7 @@ Constraints & Indexes:
 - Trigger: `last_admin_guard` validates last active admin invariant
 
 ### refresh_tokens
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `user_id` UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
 - `token_hash` VARCHAR(255) NOT NULL UNIQUE
@@ -134,9 +136,11 @@ Constraints & Indexes:
 - `created_at` TIMESTAMPTZ DEFAULT NOW()
 
 Indexes:
+
 - `idx_refresh_token_user` ON (user_id)
 
 ### attendance
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `user_id` UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
 - `marked_by` UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
@@ -148,11 +152,13 @@ Indexes:
 - `deleted_at` TIMESTAMPTZ
 
 Constraints & Indexes:
+
 - UNIQUE(user_id, date)
 - `idx_attendance_user_date` ON (user_id, date)
 - `idx_attendance_marked_by` ON (marked_by)
 
 ### ratings
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `rated_user_id` UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
 - `rated_by` UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
@@ -163,10 +169,12 @@ Constraints & Indexes:
 - `deleted_at` TIMESTAMPTZ
 
 Indexes:
+
 - `idx_ratings_rated_user` ON (rated_user_id)
 - `idx_ratings_rated_by` ON (rated_by)
 
 ### social_tasks
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `title` VARCHAR(255) NOT NULL
 - `description` TEXT
@@ -180,10 +188,12 @@ Indexes:
 - `reminder_sent_at` TIMESTAMPTZ
 
 Indexes:
+
 - `idx_social_tasks_deadline` ON (deadline)
 - `idx_social_tasks_deadline_reminder` ON (deadline) WHERE deadline IS NOT NULL AND reminder_sent_at IS NULL AND deleted_at IS NULL
 
 ### proof_submissions
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `task_id` UUID NOT NULL REFERENCES social_tasks(id) ON DELETE CASCADE
 - `intern_id` UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
@@ -199,16 +209,19 @@ Indexes:
 - `deleted_at` TIMESTAMPTZ
 
 Indexes:
+
 - `idx_proof_task` ON (task_id)
 - `idx_proof_intern` ON (intern_id)
 
 ### proof_images
+
 - `id` UUID PRIMARY KEY DEFAULT `gen_random_uuid()`
 - `proof_id` UUID NOT NULL REFERENCES proof_submissions(id) ON DELETE CASCADE
 - `image_path` TEXT NOT NULL
 - `created_at` TIMESTAMPTZ DEFAULT NOW()
 
 ### notifications
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `user_id` UUID NOT NULL REFERENCES users(id)
 - `message` TEXT NOT NULL
@@ -217,10 +230,12 @@ Indexes:
 - `deleted_at` TIMESTAMPTZ
 
 Indexes:
+
 - `idx_notifications_user` ON (user_id, read)
 - `idx_notifications_deleted_at` ON (deleted_at) WHERE deleted_at IS NULL
 
 ### audit_logs
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `user_id` UUID
 - `action` VARCHAR(100) NOT NULL
@@ -234,11 +249,13 @@ Indexes:
 - `created_at` TIMESTAMPTZ DEFAULT NOW()
 
 Indexes:
+
 - `idx_audit_user` ON (user_id)
 - `idx_audit_action` ON (action)
 - `idx_audit_created` ON (created_at)
 
 ### login_attempts
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `email` VARCHAR(255) NOT NULL
 - `ip_address` VARCHAR(45)
@@ -246,10 +263,12 @@ Indexes:
 - `attempted_at` TIMESTAMPTZ DEFAULT NOW()
 
 Indexes:
+
 - `idx_login_attempts_email` ON (email)
 - `idx_login_attempts_ip` ON (ip_address)
 
 ### meetings
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `title` VARCHAR(255) NOT NULL
 - `description` TEXT
@@ -264,11 +283,13 @@ Indexes:
 - `deleted_at` TIMESTAMPTZ
 
 ### meeting_attendees
+
 - `meeting_id` UUID REFERENCES meetings(id) ON DELETE CASCADE
 - `user_id` UUID REFERENCES users(id) ON DELETE CASCADE
 - PRIMARY KEY (meeting_id, user_id)
 
 ### password_reset_tokens
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `user_id` UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
 - `token_hash` VARCHAR(255) NOT NULL UNIQUE
@@ -277,9 +298,11 @@ Indexes:
 - `created_at` TIMESTAMPTZ DEFAULT NOW()
 
 Indexes:
+
 - `idx_reset_token_hash` ON (token_hash)
 
 ### email_verifications
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `user_id` UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
 - `token_hash` VARCHAR(255) NOT NULL UNIQUE
@@ -288,10 +311,12 @@ Indexes:
 - `created_at` TIMESTAMPTZ DEFAULT NOW()
 
 Indexes:
+
 - `idx_email_verif_token_hash` ON (token_hash)
 - `idx_email_verif_user_id` ON (user_id)
 
 ### task_assignments
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `task_id` UUID NOT NULL REFERENCES social_tasks(id) ON DELETE CASCADE
 - `user_id` UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
@@ -301,18 +326,22 @@ Indexes:
 - UNIQUE (task_id, user_id)
 
 Indexes:
+
 - `idx_task_assignments_user_id` ON (user_id) WHERE deleted_at IS NULL
 - `idx_task_assignments_task_id` ON (task_id) WHERE deleted_at IS NULL
 
 ### password_reset_attempts
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `email` VARCHAR(255) NOT NULL
 - `attempted_at` TIMESTAMPTZ DEFAULT NOW()
 
 Indexes:
+
 - `idx_pwd_reset_attempts_email_time` ON (email, attempted_at DESC)
 
 ### ai_usage
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `user_id` UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
 - `usage_date` DATE NOT NULL DEFAULT CURRENT_DATE
@@ -322,10 +351,12 @@ Indexes:
 - UNIQUE(user_id, usage_date)
 
 Indexes:
+
 - `idx_ai_usage_user_id` ON (user_id)
 - `idx_ai_usage_date` ON (usage_date)
 
 ### notices
+
 - `id` UUID PRIMARY KEY DEFAULT `uuid_generate_v4()`
 - `title` VARCHAR(255) NOT NULL
 - `content` TEXT NOT NULL
@@ -337,10 +368,12 @@ Indexes:
 - `deleted_at` TIMESTAMPTZ
 
 Indexes & Comments:
+
 - `idx_notices_active` ON (is_active, deleted_at)
 - Comments on `category`, `is_active`, `deleted_at` describing meaning (see migration)
 
 ### certificate_templates
+
 - `id` UUID PRIMARY KEY DEFAULT `gen_random_uuid()`
 - `name` VARCHAR(255) NOT NULL
 - `description` TEXT
@@ -353,9 +386,11 @@ Indexes & Comments:
 - `updated_at` TIMESTAMPTZ DEFAULT NOW()
 
 Indexes:
+
 - `idx_certificate_templates_created_by` ON (created_by)
 
 ### certificates
+
 - `id` UUID PRIMARY KEY DEFAULT `gen_random_uuid()`
 - `template_id` UUID REFERENCES certificate_templates(id) ON DELETE SET NULL
 - `recipient_name` VARCHAR(255) NOT NULL
@@ -376,12 +411,14 @@ Indexes:
 - `updated_at` TIMESTAMPTZ DEFAULT NOW()
 
 Indexes:
+
 - `idx_certificates_created_by` ON (created_by)
 - `idx_certificates_template_id` ON (template_id)
 - `idx_certificates_status` ON (status)
 - `idx_certificates_recipient_email` ON (recipient_email)
 
 ### bulk_jobs
+
 - `id` UUID PRIMARY KEY DEFAULT `gen_random_uuid()`
 - `template_id` UUID REFERENCES certificate_templates(id) ON DELETE SET NULL
 - `csv_filename` VARCHAR(255)
@@ -398,10 +435,12 @@ Indexes:
 - `completed_at` TIMESTAMPTZ
 
 Indexes:
+
 - `idx_bulk_jobs_created_by` ON (created_by)
 - `idx_bulk_jobs_status` ON (status)
 
 ### bulk_job_items
+
 - `id` UUID PRIMARY KEY DEFAULT `gen_random_uuid()`
 - `bulk_job_id` UUID REFERENCES bulk_jobs(id) ON DELETE CASCADE
 - `certificate_id` UUID REFERENCES certificates(id) ON DELETE SET NULL
@@ -413,9 +452,11 @@ Indexes:
 - `created_at` TIMESTAMPTZ DEFAULT NOW()
 
 Indexes:
+
 - `idx_bulk_job_items_bulk_job_id` ON (bulk_job_id)
 
 ### canva_settings
+
 - `id` UUID PRIMARY KEY DEFAULT `gen_random_uuid()`
 - `access_token` TEXT
 - `refresh_token` TEXT
@@ -429,6 +470,7 @@ Indexes:
 ---
 
 ## Foreign Keys (Summary)
+
 - `users.manager_id` -> `users.id`
 - `users.department_id` -> `departments.id` (ON DELETE SET NULL)
 - `refresh_tokens.user_id` -> `users.id` (ON DELETE CASCADE)
@@ -461,6 +503,7 @@ Indexes:
 ---
 
 ## Indexes (Summary)
+
 - `idx_users_email`, `idx_users_role`, `idx_users_manager`, `idx_users_department`
 - `users_email_lower_idx` (unique on LOWER(email))
 - `users_email_active_key` (unique partial on LOWER(email) WHERE deleted_at IS NULL)
@@ -480,7 +523,6 @@ Indexes:
 - `idx_notices_active`
 - `idx_certificates_created_by`, `idx_certificates_template_id`, `idx_certificates_status`, `idx_certificates_recipient_email`
 - `idx_bulk_jobs_created_by`, `idx_bulk_jobs_status`, `idx_bulk_job_items_bulk_job_id`, `idx_certificate_templates_created_by`
-
 
 ---
 
