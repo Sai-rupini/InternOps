@@ -21,6 +21,7 @@ const app = Fastify({
     config.nodeEnv === 'development'
       ? { transport: { target: 'pino-pretty' } }
       : true,
+  bodyLimit: 1048576,
   genReqId: () => uuidv4(),
 });
 
